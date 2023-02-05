@@ -6,7 +6,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"strings"
 
 	"golang.org/x/tools/go/vcs"
 	"gopkg.in/yaml.v3"
@@ -49,7 +48,14 @@ func FromFile(file string) (*Repo, error) {
 	}
 }
 
+// FetchAndCacheDeps removes all locally cached dependencies, then tries to re-download them
+// eventually it will cache them and only download if necessary
 func (r *Repo) FetchAndCacheDeps() error {
+	err := os.RemoveAll(path.Join(r.local, ".proto/"))
+	if err != nil {
+		return err
+	}
+
 	for _, dep := range r.Deps {
 		dep.local = r.local
 		_, err := dep.FetchAndCache()
@@ -75,45 +81,15 @@ func (r *Repo) FetchAndCache() (*Repo, error) {
 	}
 	v := vcs.ByCmd("git")
 
-	url := fmt.Sprintf("https://%s", r.Remote)
-	if strings.Contains(r.Remote, "https://") {
-		return nil, errors.New("invalid remote, should be of form (dns.name)/org/repo")
+	root, err := vcs.RepoRootForImportPath(r.Remote, false)
+	if err != nil {
+		return nil, err
 	}
 
-	localPath = path.Join(localPath, r.Remote)
+	localPath = path.Join(localPath, root.Root)
 
-	v.CreateAtRev(localPath, url, r.Commit)
-	// // TODO: Auth
-	// repo, err := git.Clone(memory.NewStorage(), memfs.New(), &git.CloneOptions{
-	// 	URL: r.Remote,
-	// })
+	v.CreateAtRev(localPath, root.Repo, r.Commit)
 
-	// fmt.Println("Cloned", repo)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// w, err := repo.Worktree()
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// err = w.Checkout(&git.CheckoutOptions{
-	// 	Hash: plumbing.NewHash(r.Commit),
-	// })
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// files, _ := w.Filesystem.ReadDir(".")
-
-	// for _, f := range files {
-
-	// }
-
-	// obj, err := repo.CommitObject(plumbing.NewHash(r.Commit))
-
-	// fmt.Println(obj.Message)
 	return nil, err
 }
 

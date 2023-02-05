@@ -23,40 +23,30 @@ package cmd
 
 import (
 	"fmt"
-	"path"
 
-	"github.com/jlyon1/proto/repo"
 	"github.com/spf13/cobra"
 )
 
-// getCmd represents the get command
-var getCmd = &cobra.Command{
-	Use:   "get",
+// compileCmd represents the compile command
+var compileCmd = &cobra.Command{
+	Use:   "compile",
 	Short: "A brief description of your command",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		dir, err := cmd.Flags().GetString("dir")
-		p := path.Join(dir, "proto.yaml")
-		r, err := repo.FromFile(p)
-		// TODO: This currently deletes and pulls fresh every time
-		// we should use a lock file
-		r.FetchAndCacheDeps()
-
-		fmt.Println(r, err)
+		fmt.Println("compile called")
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(getCmd)
-	getCmd.Flags().StringP("dir", "d", ".", "directory to initialize")
+	rootCmd.AddCommand(compileCmd)
 
 	// Here you will define your flags and configuration settings.
 
-	// Cobra suppo`rts Persistent Flags which will work for this command
+	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// getCmd.PersistentFlags().String("foo", "", "A help for foo")
+	// compileCmd.PersistentFlags().String("foo", "", "A help for foo")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// getCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// compileCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

@@ -23,40 +23,35 @@ package cmd
 
 import (
 	"fmt"
-	"path"
 
-	"github.com/jlyon1/proto/repo"
 	"github.com/spf13/cobra"
 )
 
-// getCmd represents the get command
-var getCmd = &cobra.Command{
-	Use:   "get",
+// validateCmd represents the validate command
+var validateCmd = &cobra.Command{
+	Use:   "validate",
 	Short: "A brief description of your command",
-	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
-		dir, err := cmd.Flags().GetString("dir")
-		p := path.Join(dir, "proto.yaml")
-		r, err := repo.FromFile(p)
-		// TODO: This currently deletes and pulls fresh every time
-		// we should use a lock file
-		r.FetchAndCacheDeps()
+	Long: `A longer description that spans multiple lines and likely contains examples
+and usage of using your command. For example:
 
-		fmt.Println(r, err)
+Cobra is a CLI library for Go that empowers applications.
+This application is a tool to generate the needed files
+to quickly create a Cobra application.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("validate called")
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(getCmd)
-	getCmd.Flags().StringP("dir", "d", ".", "directory to initialize")
+	rootCmd.AddCommand(validateCmd)
 
 	// Here you will define your flags and configuration settings.
 
-	// Cobra suppo`rts Persistent Flags which will work for this command
+	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// getCmd.PersistentFlags().String("foo", "", "A help for foo")
+	// validateCmd.PersistentFlags().String("foo", "", "A help for foo")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// getCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// validateCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
