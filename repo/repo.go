@@ -6,16 +6,29 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"golang.org/x/tools/go/vcs"
 	"gopkg.in/yaml.v3"
 )
 
+type Plugin struct {
+	Name string
+	Out  string
+	Opt  string
+}
+
+type Build struct {
+	Plugins []Plugin
+	Output  string
+	Deps    []Repo `yaml:"deps,omitempty"`
+}
+
 type Repo struct {
 	Remote  string `yaml:"remote,omitempty"`
-	Version string
+	Version string `yaml:"version,omitempty"`
 	Commit  string `yaml:"commit,omitempty"`
-	Deps    []Repo `yaml:"deps,omitempty"`
+	Build   Build  `yaml:"build,omitempty"`
 	local   string
 }
 
@@ -28,7 +41,15 @@ func NewRepo(local string, remote string, version string) (*Repo, error) {
 		remote,
 		version,
 		"",
-		[]Repo{},
+		Build{
+			Plugins: []Plugin{
+				{
+					Name: "go",
+					Out:  "gen/",
+				},
+			},
+			Deps: []Repo{},
+		},
 		path,
 	}, nil
 }
@@ -56,7 +77,7 @@ func (r *Repo) FetchAndCacheDeps() error {
 		return err
 	}
 
-	for _, dep := range r.Deps {
+	for _, dep := range r.Build.Deps {
 		dep.local = r.local
 		_, err := dep.FetchAndCache()
 		fmt.Println(err)
@@ -95,7 +116,6 @@ func (r *Repo) FetchAndCache() (*Repo, error) {
 
 func (r *Repo) Validate() error {
 	path := r.local
-	os.Chdir(path)
 
 	err := os.Chdir(path)
 	if err != nil {
@@ -108,6 +128,47 @@ func (r *Repo) Validate() error {
 	}
 
 	return nil
+}
+
+func (r *Repo) GetAbsolutePath() (string, error) {
+	return filepath.Abs(r.local)
+}
+
+// If this repo is a dependency get the path to it's root
+func (r *Repo) GetDependencyPath() (string, error) {
+	root, err := vcs.RepoRootForImportPath(r.Remote, false)
+	if err != nil {
+		return "", err
+	}
+	return path.Join(".proto", root.Root), nil
+}
+
+func (r *Repo) GetAllLocalProtoFiles() ([]string, error) {
+	files := []string{}
+	err := filepath.Walk(".",
+		func(fullFilename string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+
+			// ignore remote deps
+			if strings.Contains(path.Dir(fullFilename), ".proto") || info.IsDir() {
+				return nil
+			}
+
+			if strings.Contains(info.Name(), ".proto") {
+				path, err := filepath.Abs(path.Join(path.Dir(fullFilename), info.Name()))
+				if err != nil {
+					return err
+				}
+				files = append(files, path)
+			}
+			return nil
+		})
+	if err != nil {
+		return nil, err
+	}
+	return files, nil
 }
 
 func (r *Repo) Init() error {
@@ -132,7 +193,7 @@ func (r *Repo) Init() error {
 
 	if reinitialize {
 		r.Remote = existingRepo.Remote
-		r.Deps = existingRepo.Deps
+		r.Build = existingRepo.Build
 		fmt.Printf("Reinitializing existing repo in %s\n", r.local)
 	}
 	yamlData, err := yaml.Marshal(r)

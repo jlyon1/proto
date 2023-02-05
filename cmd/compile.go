@@ -23,7 +23,11 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"path"
 
+	"github.com/jlyon1/proto/compile"
+	"github.com/jlyon1/proto/repo"
 	"github.com/spf13/cobra"
 )
 
@@ -33,20 +37,37 @@ var compileCmd = &cobra.Command{
 	Short: "A brief description of your command",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("compile called")
+		dir, err := cmd.Flags().GetString("dir")
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		p := path.Join(dir, "proto.yaml")
+		r, err := repo.FromFile(p)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		c := compile.NewBuilder(*r)
+
+		cmdToRun, err := c.GetCommand()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		err = compile.ExecuteCommand(cmdToRun)
+
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(compileCmd)
+	compileCmd.Flags().StringP("dir", "d", ".", "directory to compile")
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// compileCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// compileCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

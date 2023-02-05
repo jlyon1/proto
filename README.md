@@ -2,11 +2,16 @@
 
 Schema Based Development Without the SaaS. Like [buf.build](https://buf.build) but without charging to host schemas. Instead `proto` uses version control as a backing in a sane way.
 
+## Dependencies
+
+* protoc
+* protoc plugins (eg protoc-gen-go)
+
 ## Features
 
 These are the current and planned features
 
-### Version 0.1 Pre-Release
+### Version 0.0.1 Pre-Release
 
 * `proto mod init (dns.name)/org/repo` - Creates a proto repo in a directory with a given remote
 * `proto mod tidy` - clean a repo
