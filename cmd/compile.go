@@ -69,5 +69,4 @@ var compileCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(compileCmd)
 	compileCmd.Flags().StringP("dir", "d", ".", "directory to compile")
-
 }
